@@ -2,18 +2,19 @@ import torch
 from tqdm import tqdm
 
 from tokenizer import Tokenizer
-from model import BiagramLanguageModel
+from model import BigramLanguageModel
 
 # -----------------------------------------------------------
 # Hyperparameters
-MAX_TRAIN_SIZE = 10 * 1024 * 1024
+# MAX_TRAIN_SIZE = 10 * 1024 * 1024
 BATCH_SIZE = 32
 BLOCK_SIZE = 8
-EPOCHS = 30000
-eval_interval = 300
-learning_rate = 1e-2
+EPOCHS = 10000
+eval_interval = 500
+learning_rate = 1e-3
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-EVAL_ITERS = 200
+eval_iters = 200
+n_embd = 32
 # -----------------------------------------------------------
 
 def get_batch(data:torch.Tensor, batch_size, block_size):
@@ -30,8 +31,8 @@ def estimate_loss(model:torch.nn.Module):
     out = {}
     model.eval()
     for split in ['train', 'val']:
-        losses = torch.zeros(EVAL_ITERS)
-        for k in range(EVAL_ITERS):
+        losses = torch.zeros(eval_iters)
+        for k in range(eval_iters):
             xb, yb = get_batch(train_data if split == 'train' else val_data, 
                                batch_size=BATCH_SIZE, block_size=BLOCK_SIZE)
             xb, yb = xb.to(device), yb.to(device)
@@ -72,8 +73,10 @@ def train(n_epochs, batch_size, block_size,
 
 
 if __name__ == "__main__":
-    with open("/media/danny/SuperMoose/Data/nanoGPT/pile_clean.txt", 'r') as f:
-        text = f.read(MAX_TRAIN_SIZE)
+    # with open("/media/danny/SuperMoose/Data/nanoGPT/pile_clean.txt", 'r') as f:
+    #     text = f.read(MAX_TRAIN_SIZE)
+    with open(r'./data/input.txt', 'r') as f:
+        text = f.read()
 
     token = Tokenizer.load_json(r"resources/TokenizerModel.json")
 
@@ -89,7 +92,7 @@ if __name__ == "__main__":
     torch.manual_seed(1024)
     vocab_size = len(token.vocab)
 
-    blm = BiagramLanguageModel(vocab_size=vocab_size).to(device)
+    blm = BigramLanguageModel(vocab_size=vocab_size, n_embd=n_embd).to(device)
     optimizer = torch.optim.AdamW(blm.parameters(), lr = 1e-3)
 
     train(EPOCHS,
@@ -98,6 +101,6 @@ if __name__ == "__main__":
         model=blm,
         optimizer=optimizer)
 
-    sentences = "Working over the theme, I found that as I proceeded, "
+    sentences = "First Citizen:"
     inputs = torch.tensor(token.encode(sentences)).unsqueeze(0).to(device)
     print(token.decode((blm.generate(inputs, max_new_tokens=100)[0].tolist())))
