@@ -104,7 +104,12 @@ if __name__ == "__main__":
         block_size=BLOCK_SIZE,
         model=blm,
         optimizer=optimizer)
+    
+    save_path = "gpt_model.pth"
+    torch.save(blm.state_dict(), save_path)
+    print(f"Model saved to {save_path}")
 
     sentences = "First Citizen:"
     inputs = torch.tensor(token.encode(sentences)).unsqueeze(0).to(device)
     print(token.decode((blm.generate(inputs, max_new_tokens=100)[0].tolist())))
+
