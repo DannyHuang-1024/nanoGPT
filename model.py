@@ -33,6 +33,17 @@ class Head(nn.Module):
         return out
 
 
+class FeedForward(nn.Module):
+    def __init__(self, n_embd):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(n_embd, n_embd),
+            nn.ReLU(),
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
 
 class BigramLanguageModel(nn.Module):
     def __init__(self, vocab_size, n_embd=32, block_size=8):
@@ -53,6 +64,7 @@ class BigramLanguageModel(nn.Module):
         self.position_embedding_table = nn.Embedding(block_size, n_embd)
 
         self.sa_head = Head(n_embd, n_embd, block_size)
+        self.ffwd = FeedForward(n_embd=n_embd)
         self.lm_head = nn.Linear(n_embd, vocab_size)
         # Base on the features(The embedding) we have, calculate the exact prossibility of next token
 
@@ -62,6 +74,7 @@ class BigramLanguageModel(nn.Module):
         pos_emb = self.position_embedding_table(torch.arange(T, device=device))
         x = tok_emb + pos_emb # (B,T,C)
         x = self.sa_head(x) # apply one head of self-attention (B,T,C)
+        x = self.ffwd(x)
         logits = self.lm_head(x) # (B,T,Vocab_size)
 
         if targets is None:

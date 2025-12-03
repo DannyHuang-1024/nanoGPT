@@ -75,7 +75,7 @@ def train(n_epochs, batch_size, block_size,
 if __name__ == "__main__":
     # with open("/media/danny/SuperMoose/Data/nanoGPT/pile_clean.txt", 'r') as f:
     #     text = f.read(MAX_TRAIN_SIZE)
-    with open(r'./data/input.txt', 'r') as f:
+    with open(r'./resources/input.txt', 'r') as f:
         text = f.read()
 
     token = Tokenizer.load_json(r"resources/TokenizerModel.json")
