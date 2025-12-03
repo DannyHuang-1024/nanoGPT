@@ -7,14 +7,15 @@ from model import BigramLanguageModel
 # -----------------------------------------------------------
 # Hyperparameters
 # MAX_TRAIN_SIZE = 10 * 1024 * 1024
-BATCH_SIZE = 32
-BLOCK_SIZE = 8
-EPOCHS = 10000
+BATCH_SIZE = 64
+BLOCK_SIZE = 256
+EPOCHS = 5000
 eval_interval = 500
-learning_rate = 1e-3
+learning_rate = 3e-4
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 eval_iters = 200
-n_embd = 32
+n_embd = 384
+n_layer = 6
 # -----------------------------------------------------------
 
 def get_batch(data:torch.Tensor, batch_size, block_size):
@@ -49,7 +50,7 @@ def train(n_epochs, batch_size, block_size,
     pbar = tqdm(range(n_epochs), desc="Training progress")
     for step in pbar:
         # sample a batch of data
-        xb, yb = get_batch(train_data, batch_size=4, block_size=8)
+        xb, yb = get_batch(train_data, batch_size=batch_size, block_size=block_size)
         xb, yb = xb.to(device), yb.to(device) 
 
         if step % eval_interval == 0 or step == n_epochs - 1:
@@ -92,7 +93,10 @@ if __name__ == "__main__":
     torch.manual_seed(1024)
     vocab_size = len(token.vocab)
 
-    blm = BigramLanguageModel(vocab_size=vocab_size, n_embd=n_embd).to(device)
+    blm = BigramLanguageModel(vocab_size=vocab_size, 
+                              n_embd=n_embd, 
+                              block_size=BLOCK_SIZE,
+                              n_layer=n_layer).to(device)
     optimizer = torch.optim.AdamW(blm.parameters(), lr = 1e-3)
 
     train(EPOCHS,
